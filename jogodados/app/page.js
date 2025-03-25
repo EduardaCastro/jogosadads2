@@ -2,87 +2,111 @@
 
 import { useState } from "react";
 
-function App() {
-  const [numeroJogador1, setNumeroJogador1] = useState(1);
-  const [numeroJogador2, setNumeroJogador2] = useState(1);
+const imagens = {
+  1: "/dado1.png",
+  2: "/dado2.png",
+  3: "/dado3.png",
+  4: "/dado4.png",
+  5: "/dado5.png",
+  6: "/dado6.png",
+};
+
+function Dado({ valor }) {
+  return <img src={imagens[valor]} alt={`Dado mostrando ${valor}`} width={100} />;
+}
+
+const gerarNumeroDado = () => Math.floor(Math.random() * 6) + 1;
+
+export default function Home() {
   const [rodada, setRodada] = useState(1);
-  const [placarJogador1, setPlacarJogador1] = useState(0);
-  const [placarJogador2, setPlacarJogador2] = useState(0);
-  const [mensagem, setMensagem] = useState('');
+  const [pontos, setPontos] = useState([0, 0]);
+  const [dados, setDados] = useState([1, 1]);
+  const [status, setStatus] = useState([false, false]);
+  const [mensagem, setMensagem] = useState("Jogador 1 começa!");
 
-  const rolarDados = () => {
-    if (rodada > 5) return;
+  const jogarDado = (jogadorIndex) => {
+    const valor = gerarNumeroDado();
+    const novosDados = [...dados];
+    novosDados[jogadorIndex] = valor;
+    setDados(novosDados);
 
-    const novoNumero1 = Math.floor(Math.random() * 6) + 1;
-    const novoNumero2 = Math.floor(Math.random() * 6) + 1;
+    const novosStatus = [...status];
+    novosStatus[jogadorIndex] = true;
+    setStatus(novosStatus);
 
-    setNumeroJogador1(novoNumero1);
-    setNumeroJogador2(novoNumero2);
-
-    if (novoNumero1 > novoNumero2) {
-      setPlacarJogador1(placarJogador1 + 1);
-    } else if (novoNumero2 > novoNumero1) {
-      setPlacarJogador2(placarJogador2 + 1);
+    if (jogadorIndex === 0) {
+      setMensagem("Jogador 2, sua vez!");
+    } else {
+      determinarVencedor();
     }
-
-    if (rodada === 5) {
-      if (placarJogador1 > placarJogador2) {
-        setMensagem('Jogador 1 venceu o jogo!!!!🥳🥇');
-      } else if (placarJogador2 > placarJogador1) {
-        setMensagem('Jogador 2 venceu o jogo!!!!🥳🥇');
-      } else {
-        setMensagem('Empate no jogo!🤝🏻⚖️');
-      }
-    }
-
-    setRodada(rodada + 1);
   };
 
-  const jogarNovamente = () => {
+  const determinarVencedor = () => {
+    const [jogador1Valor, jogador2Valor] = dados;
+    const vencedor = jogador1Valor > jogador2Valor ? 0 : jogador2Valor > jogador1Valor ? 1 : null;
+    
+    setTimeout(() => {
+      if (vencedor !== null) {
+        const novosPontos = [...pontos];
+        novosPontos[vencedor] += 1;
+        setPontos(novosPontos);
+        setMensagem(`Jogador ${vencedor + 1} ganhou a rodada!`);
+      } else {
+        setMensagem("Empate!");
+      }
+    }, 1000);
+  };
+
+  const proximaRodada = () => {
+    if (rodada < 5) {
+      setRodada(rodada + 1);
+      setStatus([false, false]);
+      setMensagem(`Rodada ${rodada + 1}, Jogador 1 começa!`);
+    }
+  };
+
+  const reiniciarJogo = () => {
     setRodada(1);
-    setNumeroJogador1(1);
-    setNumeroJogador2(1);
-    setPlacarJogador1(0);
-    setPlacarJogador2(0);
-    setMensagem('');
+    setPontos([0, 0]);
+    setDados([1, 1]);
+    setStatus([false, false]);
+    setMensagem("Jogador 1 começa!");
   };
 
   return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
-      <h1>Jogo de Dados 🎲</h1>
-      <h2>Rodada {rodada <= 5 ? rodada : 5}/5</h2>
-
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '50px', marginBottom: '20px' }}>
-        <div>
-          <h3>Jogador 1</h3>
-          <Dado numero={numeroJogador1} />
-        </div>
-
-        <div>
-          <h3>Jogador 2</h3>
-          <Dado numero={numeroJogador2} />
-        </div>
+    <div style={{ textAlign: "center", padding: "20px" }}>
+      <h1>Rodada {rodada}</h1>
+      <p>{mensagem}</p>
+      <div style={{ display: "flex", justifyContent: "center", gap: "50px" }}>
+        {["Jogador 1", "Jogador 2"].map((jogador, index) => (
+          <div key={index}>
+            <h2>{jogador}</h2>
+            <Dado valor={dados[index]} />
+            <button
+              onClick={() => jogarDado(index)}
+              disabled={status[index]}
+            >
+              {status[index] ? "Já jogou" : "Rolar Dado"}
+            </button>
+          </div>
+        ))}
       </div>
-
-      {rodada <= 5 && (
-        <button onClick={rolarDados} style={{ padding: '10px 20px', fontSize: '16px' }}>
-          Rolar Dados
-        </button>
+      <h2>Placar: {pontos[0]} X {pontos[1]}</h2>
+      {rodada < 5 && status.every((status) => status) && (
+        <button onClick={proximaRodada}>Próxima Rodada</button>
       )}
-
-      <h3>Placar</h3>
-      <p>Jogador 1: {placarJogador1} x Jogador 2: {placarJogador2}</p>
-
-      {mensagem && (
-        <>
-          <h2>{mensagem}</h2>
-          <button onClick={jogarNovamente} style={{ padding: '10px 20px', marginTop: '20px' }}>
-            Jogar Novamente
-          </button>
-        </>
+      {rodada === 5 && status.every((status) => status) && (
+        <div>
+          <h2>
+            {pontos[0] > pontos[1]
+              ? "🏆 Jogador 1 venceu!"
+              : pontos[1] > pontos[0]
+              ? "🏆 Jogador 2 venceu!"
+              : "Empate!"}
+          </h2>
+          <button onClick={reiniciarJogo}>Jogar Novamente</button>
+        </div>
       )}
     </div>
   );
 }
-
-export default App;
