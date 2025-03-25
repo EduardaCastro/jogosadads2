@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
-import Dado from './components/Dado';
+import { useState } from "react";
 
 function App() {
   const [numeroJogador1, setNumeroJogador1] = useState(1);
